@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Callable
+from typing import Callable, Optional
 from dataclasses import dataclass
 
 
@@ -10,14 +10,14 @@ class Mask:
 
 
 class MachineCode(object):
-    def __init__(self, hex_bytes: str) -> None:
-        self._value = int("".join(hex_bytes), 16)
+    def __init__(self, hex_string: str) -> None:
+        self._value = int(hex_string.replace(" ", ""), 16)
 
     def getHex(self) -> str:
         """Return the machine code bytes as a hex string."""
         return f"{self._value:0x}"
 
-    def getBits(self, start: int, end: int = None) -> str:
+    def getBits(self, start: int, end: Optional[int] = None) -> str:
         """Return the requested bit(s) as a binary string."""
         if end is None:
             end = start
@@ -51,7 +51,7 @@ class ARM64Instruction(object):
 
 
 CCs = Enum(
-    "Condition Code",
+    "CCs",
     names=(
         "eq",
         "ne",

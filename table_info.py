@@ -1,7 +1,8 @@
 import instruction_info
 
 from dataclasses import dataclass
-from utils import Mask
+from typing import Dict, List
+from utils import ARM64Instruction, Mask
 
 
 @dataclass
@@ -258,65 +259,72 @@ section_3_tables = {
     },
 }
 
-section_4_instructions = {
-    "Add/subtract (immediate)": {
-        "subsection": "4.01",
-        "encoding": instruction_info.add_sub_imm,
-    },
-    "Move wide (immediate)": {
-        "subsection": "4.02",
-        "encoding": instruction_info.mov_wide,
-    },
-    "Unconditional branch (immediate)": {
-        "subsection": "4.03",
-        "encoding": instruction_info.uncond_branch_imm,
-    },
-    "Unconditional branch (register)": {
-        "subsection": "4.04",
-        "encoding": instruction_info.uncond_branch_reg,
-    },
-    "Conditional branch (immediate)": {
-        "subsection": "4.05",
-        "encoding": instruction_info.cond_branch_imm,
-    },
-    "Compare and branch (immediate)": {
-        "subsection": "4.06",
-        "encoding": instruction_info.comp_branch_imm,
-    },
-    "Data-processing (2 source)": {
-        "subsection": "4.07",
-        "encoding": instruction_info.sudiv,
-    },
-    "Logical (shifted register)": {
-        "subsection": "4.08",
-        "encoding": instruction_info.logical,
-    },
-    "Add/subtract (shifted register)": {
-        "subsection": "4.09",
-        "encoding": instruction_info.add_sub_reg,
-    },
-    "Data-processing (3 source)": {
-        "subsection": "4.10/4.11",
-        "encoding": instruction_info.muls,
-    },
-    "Load/store register pair": {
-        "subsection": "4.12",
-        "encoding": instruction_info.ldp_stp,
-    },
-    "Load/store register (unsigned immediate)": {
-        "subsection": "4.13",
-        "encoding": instruction_info.ldr_str_uimm_offset,
-    },
-    "Load/store register (immediate pre/post-indexed)": {
-        "subsection": "4.14",
-        "encoding": instruction_info.ldr_str_pre_post_idx,
-    },
-    "Load/store register (register offset)": {
-        "subsection": "4.15",
-        "encoding": instruction_info.ldr_str_reg_offset,
-    },
-    "Hints": {
-        "subsection": "4.16",
-        "encoding": instruction_info.nop,
-    },
+
+@dataclass
+class InstructionEntry:
+    subsection: str
+    instruction: ARM64Instruction
+
+
+section_4_instructions: Dict[str, InstructionEntry] = {
+    "Add/subtract (immediate)": InstructionEntry(
+        subsection="4.01",
+        instruction=instruction_info.add_sub_imm,
+    ),
+    "Move wide (immediate)": InstructionEntry(
+        subsection="4.02",
+        instruction=instruction_info.mov_wide,
+    ),
+    "Unconditional branch (immediate)": InstructionEntry(
+        subsection="4.03",
+        instruction=instruction_info.uncond_branch_imm,
+    ),
+    "Unconditional branch (register)": InstructionEntry(
+        subsection="4.04",
+        instruction=instruction_info.uncond_branch_reg,
+    ),
+    "Conditional branch (immediate)": InstructionEntry(
+        subsection="4.05",
+        instruction=instruction_info.cond_branch_imm,
+    ),
+    "Compare and branch (immediate)": InstructionEntry(
+        subsection="4.06",
+        instruction=instruction_info.comp_branch_imm,
+    ),
+    "Data-processing (2 source)": InstructionEntry(
+        subsection="4.07",
+        instruction=instruction_info.sudiv,
+    ),
+    "Logical (shifted register)": InstructionEntry(
+        subsection="4.08",
+        instruction=instruction_info.logical,
+    ),
+    "Add/subtract (shifted register)": InstructionEntry(
+        subsection="4.09",
+        instruction=instruction_info.add_sub_reg,
+    ),
+    "Data-processing (3 source)": InstructionEntry(
+        subsection="4.10/4.11",
+        instruction=instruction_info.muls,
+    ),
+    "Load/store register pair": InstructionEntry(
+        subsection="4.12",
+        instruction=instruction_info.ldp_stp,
+    ),
+    "Load/store register (unsigned immediate)": InstructionEntry(
+        subsection="4.13",
+        instruction=instruction_info.ldr_str_uimm_offset,
+    ),
+    "Load/store register (immediate pre/post-indexed)": InstructionEntry(
+        subsection="4.14",
+        instruction=instruction_info.ldr_str_pre_post_idx,
+    ),
+    "Load/store register (register offset)": InstructionEntry(
+        subsection="4.15",
+        instruction=instruction_info.ldr_str_reg_offset,
+    ),
+    "Hints": InstructionEntry(
+        subsection="4.16",
+        instruction=instruction_info.nop,
+    ),
 }

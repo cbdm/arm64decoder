@@ -20,8 +20,10 @@ def encode_instr(instr: List[str]) -> str:
 
 
 def decode_instr(instr: List[str]) -> str:
-    logging.debug(f"Decoding '{' '.join(instr)}'")
-    mc = MachineCode(instr)
+    user_input = " ".join(instr)
+    logging.debug(f"Decoding '{user_input}'")
+
+    mc = MachineCode(user_input)
     decode_result = [f"Input bytes: {mc.getHex().upper()}"]
 
     logging.debug("Expand hex digits: " + "    ".join(mc.getHex()))
@@ -53,13 +55,13 @@ def decode_instr(instr: List[str]) -> str:
         logging.error(
             "It's possible that your assembler chose a variation of what you wrote!"
         )
-        return
+        return f"Unable to decode {user_input}"
 
     if instr_type_count > 1:
         logging.error(
             "Machine code matched too many instruction types; is the input correct?"
         )
-        return
+        return f"Unable to decode {user_input}"
 
     decode_result.append(f"Table 2 > {instr_type}")
 
@@ -102,13 +104,13 @@ def decode_instr(instr: List[str]) -> str:
         logging.error(
             "It's possible that your assembler chose a variation of what you wrote!"
         )
-        return
+        return f"Unable to decode {user_input}"
 
     if instr_family_count > 1:
         logging.error(
             "Machine code matched too many instruction families; is the input correct?"
         )
-        return
+        return f"Unable to decode {user_input}"
 
     decode_result.append(f"Table {subsection} > {instr_family}")
 
@@ -122,8 +124,8 @@ def decode_instr(instr: List[str]) -> str:
         return "\n\t-".join(decode_result)
 
     s4_intr = section_4_instructions[instr_family]
-    subsection = s4_intr["subsection"]
-    instr_encoding = s4_intr["encoding"]
+    subsection = s4_intr.subsection
+    instr_encoding = s4_intr.instruction
 
     logging.debug(f"Filling in placeholder bits from Section {subsection};")
     asm_instr = instr_encoding.decode(mc)
