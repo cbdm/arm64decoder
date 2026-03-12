@@ -1,6 +1,7 @@
+"""Contains the objects for the Section 4 instructions."""
+
 import decoding_info
 from utils import ARM64Instruction, Mask
-
 
 add_sub_imm = ARM64Instruction(
     instr_bit_format=Mask("xxx100010xxxxxxxxxxxxxxxxxxxxxxx", 0),

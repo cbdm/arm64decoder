@@ -1,12 +1,16 @@
-import instruction_info
+"""Table data to parse through the machine code translation document."""
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
+
+import instruction_info
 from utils import ARM64Instruction, Mask
 
 
 @dataclass
 class TableEntry:
+    """Matches a list of bit ops to an entry in a table."""
+
     ops: List[Mask]
     result: str
 
@@ -70,7 +74,7 @@ section_2_table = [
     ),
 ]
 
-section_3_tables = {
+section_3_tables: Dict[str, Any] = {
     "Data Processing -- Immediate": {
         "subsection": "3.1",
         "ops_bits": [(30, 29), (25, 22)],
@@ -262,6 +266,8 @@ section_3_tables = {
 
 @dataclass
 class InstructionEntry:
+    """Maps subsections from section 4 to instruction objects."""
+
     subsection: str
     instruction: ARM64Instruction
 

@@ -1,5 +1,8 @@
+"""Logic to decode machine code bytes into instructions for the Section 4 instructions."""
+
 import logging
-from utils import MachineCode, Mask, CCs, twos_comp
+
+from utils import CCs, MachineCode, Mask, twos_comp
 
 logger = logging.getLogger(__name__)
 
@@ -12,72 +15,72 @@ def decode_add_sub_imm(mc: MachineCode) -> str:
     """Decoding logic for Section 4.01"""
     logger.debug("Action: Rd = Rn ± ((imm << 12) if sh else imm)")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    imm_bits = mc.getBits(21, 10)
+    imm_bits = mc.get_bits(21, 10)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 21~10) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 21~10) = %s (%d) ", imm_bits, imm)
 
-    sh_bit = mc.getBits(22)
+    sh_bit = mc.get_bits(22)
     sh = ", LSL #12" if sh_bit == "1" else ""
-    logger.debug(f"\tsh (bit 22) = {sh_bit}")
+    logger.debug("\tsh (bit 22) = %s", sh_bit)
 
-    s_suffix_bit = mc.getBits(29)
+    s_suffix_bit = mc.get_bits(29)
     s_suffix = "s" if s_suffix_bit == "1" else ""
-    logger.debug(f"\tS (bit 29) = {s_suffix_bit}")
+    logger.debug("\tS (bit 29) = %s", s_suffix_bit)
 
-    op_bit = mc.getBits(30)
+    op_bit = mc.get_bits(30)
     op = "add" if op_bit == "0" else "sub"
-    logger.debug(f"\top (bit 30) = {op_bit} ({op})")
+    logger.debug("\top (bit 30) = %s (%s)", op_bit, op)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"{op}{s_suffix} {reg}{Rd}, {reg}{Rn}, #{imm}{sh}"
+    return f"{op}{s_suffix} {reg}{rd}, {reg}{rn}, #{imm}{sh}"
 
 
 def decode_mov_wide(mc: MachineCode) -> str:
     """Decoding logic for Section 4.02"""
     logger.debug("Action: Rd = imm << (16 * hw)")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    imm_bits = mc.getBits(20, 5)
+    imm_bits = mc.get_bits(20, 5)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 20~5) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 20~5) = %s (%d) ", imm_bits, imm)
 
-    hw_bits = mc.getBits(21, 22)
+    hw_bits = mc.get_bits(21, 22)
     hw = int(hw_bits, 2)
     imm <<= hw * 16
-    logger.debug(f"\thw (bits 22~21) = {hw_bits} ({hw}) ")
+    logger.debug("\thw (bits 22~21) = %s (%d) ", hw_bits, hw)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"mov {reg}{Rd}, #{imm}"
+    return f"mov {reg}{rd}, #{imm}"
 
 
 def decode_uncond_branch_imm(mc: MachineCode) -> str:
     """Decoding logic for Section 4.03"""
     logger.debug("Action: PC += (imm*4) *and* X30 = PC+4 *if* op")
 
-    imm_bits = mc.getBits(25, 0)
+    imm_bits = mc.get_bits(25, 0)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 25~0) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 25~0) = %s (%d) ", imm_bits, imm)
 
-    link_bit = mc.getBits(31)
+    link_bit = mc.get_bits(31)
     link = "l" if link_bit == "1" else ""
-    logger.debug(f"\top (bit 31) = {link_bit}")
+    logger.debug("\top (bit 31) = %s", link_bit)
 
     return f"b{link} label (label is {imm * 4} bytes away from PC)"
 
@@ -86,28 +89,28 @@ def decode_uncond_branch_reg(mc: MachineCode) -> str:
     """Decoding logic for Section 4.04"""
     logger.debug("Action: PC = Rn *and* X30 = PC+4 *if* op")
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    link_bit = mc.getBits(21)
+    link_bit = mc.get_bits(21)
     link = "l" if link_bit == "1" else ""
-    logger.debug(f"\top (bit 21) = {link_bit}")
+    logger.debug("\top (bit 21) = %s", link_bit)
 
-    return f"b{link}r x{Rn}"
+    return f"b{link}r x{rn}"
 
 
 def decode_cond_branch_imm(mc: MachineCode) -> str:
     """Decoding logic for Section 4.05"""
     logger.debug("Action: PC += (imm * 4) if CC else (4)")
 
-    cc_bits = mc.getBits(3, 0)
+    cc_bits = mc.get_bits(3, 0)
     cc = CCs(int(cc_bits, 2) + 1)
-    logger.debug(f"\tCC (bits 3~0) = {cc_bits} ({cc}) ")
+    logger.debug("\tCC (bits 3~0) = %s (%s) ", cc_bits, cc)
 
-    imm_bits = mc.getBits(23, 5)
+    imm_bits = mc.get_bits(23, 5)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 23~5) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 23~5) = %s (%d) ", imm_bits, imm)
 
     return f"b.{cc.name} label (label is {imm * 4} bytes away from PC)"
 
@@ -116,158 +119,160 @@ def decode_comp_branch_imm(mc: MachineCode) -> str:
     """Decoding logic for Section 4.06"""
     logger.debug("Action: PC += (imm * 4) if (Rt op 0) else (4)")
 
-    Rt_bits = mc.getBits(4, 0)
-    Rt = int(Rt_bits, 2)
-    logger.debug(f"\tRt (bits 4~0) = {Rt_bits} ({Rt})")
+    rt_bits = mc.get_bits(4, 0)
+    rt = int(rt_bits, 2)
+    logger.debug("\tRt (bits 4~0) = %s (%d)", rt_bits, rt)
 
-    imm_bits = mc.getBits(23, 5)
+    imm_bits = mc.get_bits(23, 5)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 23~5) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 23~5) = %s (%d) ", imm_bits, imm)
 
-    op_bit = mc.getBits(24)
+    op_bit = mc.get_bits(24)
     op = "n" if op_bit == "1" else ""
-    logger.debug(f"\top (bit 24) = {op_bit} ({'!' if op_bit == '1' else '='}= 0)")
+    logger.debug("\top (bit 24) = %s (%s= 0)", op_bit, "!" if op_bit == "1" else "=")
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"cb{op}z {reg}{Rt}, label (label is {imm * 4} bytes away from PC)"
+    return f"cb{op}z {reg}{rt}, label (label is {imm * 4} bytes away from PC)"
 
 
 def decode_sudiv(mc: MachineCode) -> str:
     """Decoding logic for Section 4.07"""
     logger.debug("Action: Rd = Rn / Rm")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    su_bit = mc.getBits(10)
+    su_bit = mc.get_bits(10)
     su = "s" if su_bit == "1" else "u"
-    logger.debug(f"\tS/U (bit 10) = {su_bit} ({su})")
+    logger.debug("\tS/U (bit 10) = %s (%s)", su_bit, su)
 
-    Rm_bits = mc.getBits(20, 16)
-    Rm = int(Rm_bits, 2)
-    logger.debug(f"\tRm (bits 20~16) = {Rm_bits} ({Rm})")
+    rm_bits = mc.get_bits(20, 16)
+    rm = int(rm_bits, 2)
+    logger.debug("\tRm (bits 20~16) = %s (%d)", rm_bits, rm)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"{su}div {reg}{Rd}, {reg}{Rn}, {reg}{Rm}"
+    return f"{su}div {reg}{rd}, {reg}{rn}, {reg}{rm}"
 
 
 def decode_logical(mc: MachineCode) -> str:
     """Decoding logic for Section 4.08"""
     logger.debug("Action: Rd = Rn op (N(Rm) << uimm)")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    uimm_bits = mc.getBits(15, 10)
+    uimm_bits = mc.get_bits(15, 10)
     uimm = int(uimm_bits, 2)
     shift = f", LSL #{uimm}" if uimm > 0 else ""
-    logger.debug(f"\tuimm (bits 15~10) = {uimm_bits} ({uimm}) ")
+    logger.debug("\tuimm (bits 15~10) = %s (%d)", uimm_bits, uimm)
 
-    Rm_bits = mc.getBits(20, 16)
-    Rm = int(Rm_bits, 2)
-    logger.debug(f"\tRm (bits 20~16) = {Rm_bits} ({Rm})")
+    rm_bits = mc.get_bits(20, 16)
+    rm = int(rm_bits, 2)
+    logger.debug("\tRm (bits 20~16) = %s (%d)", rm_bits, rm)
 
-    flip_bit = mc.getBits(21)
-    logger.debug(f"\tFlip Rm (bit 21) = {flip_bit}")
+    flip_bit = mc.get_bits(21)
+    logger.debug("\tFlip Rm (bit 21) = %s", flip_bit)
 
-    op_bits = mc.getBits(30, 29)
+    op_bits = mc.get_bits(30, 29)
     op = {"00": "and", "01": "orr", "10": "eor", "11": "ands"}[op_bits]
     if flip_bit == "1":
         op = {"and": "bic", "orr": "orn", "eor": "eon", "ands": "bics"}[op]
-    logger.debug(f"\top (bits 30~29) = {op_bits} ({op})")
+    logger.debug("\top (bits 30~29) = %s (%s)", op_bits, op)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"{op} {reg}{Rd}, {reg}{Rn}, {reg}{Rm}{shift}"
+    return f"{op} {reg}{rd}, {reg}{rn}, {reg}{rm}{shift}"
 
 
 def decode_add_sub_reg(mc: MachineCode) -> str:
     """Decoding logic for Section 4.09"""
     logger.debug("Action: Rd = Rn ± (Rm << uimm)")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    uimm_bits = mc.getBits(15, 10)
+    uimm_bits = mc.get_bits(15, 10)
     uimm = int(uimm_bits, 2)
     shift = f", LSL #{uimm}" if uimm > 0 else ""
-    logger.debug(f"\tuimm (bits 15~10) = {uimm_bits} ({uimm}) ")
+    logger.debug("\tuimm (bits 15~10) = %s (%d)", uimm_bits, uimm)
 
-    Rm_bits = mc.getBits(20, 16)
-    Rm = int(Rm_bits, 2)
-    logger.debug(f"\tRm (bits 20~16) = {Rm_bits} ({Rm})")
+    rm_bits = mc.get_bits(20, 16)
+    rm = int(rm_bits, 2)
+    logger.debug("\tRm (bits 20~16) = %s (%d)", rm_bits, rm)
 
-    s_suffix_bit = mc.getBits(29)
+    s_suffix_bit = mc.get_bits(29)
     s_suffix = "s" if s_suffix_bit == "1" else ""
-    logger.debug(f"\tS (bit 29) = {s_suffix_bit}")
+    logger.debug("\tS (bit 29) = %s", s_suffix_bit)
 
-    op_bit = mc.getBits(30)
+    op_bit = mc.get_bits(30)
     op = "add" if op_bit == "0" else "sub"
-    logger.debug(f"\top (bit 30) = {op_bit} ({op})")
+    logger.debug("\top (bit 30) = %s (%s)", op_bit, op)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"{op}{s_suffix} {reg}{Rd}, {reg}{Rn}, {reg}{Rm}{shift}"
+    return f"{op}{s_suffix} {reg}{rd}, {reg}{rn}, {reg}{rm}{shift}"
 
 
 def decode_madd_msub(mc: MachineCode) -> str:
     """Decoding logic for Section 4.10"""
     logger.debug("Action: Rd = Ra ± Rn * Rm")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    Ra_bits = mc.getBits(14, 10)
-    Ra = int(Ra_bits, 2)
-    logger.debug(f"\tRa (bits 14~10) = {Ra_bits} ({Ra})")
+    ra_bits = mc.get_bits(14, 10)
+    ra = int(ra_bits, 2)
+    logger.debug("\tRa (bits 14~10) = %s (%d)", ra_bits, ra)
 
-    addsub_bit = mc.getBits(15)
+    addsub_bit = mc.get_bits(15)
     addsub = "add" if addsub_bit == "0" else "sub"
-    logger.debug(f"\t± (bit 15) = {addsub_bit} ({addsub})")
+    logger.debug("\t± (bit 15) = %s (%s)", addsub_bit, addsub)
 
-    Rm_bits = mc.getBits(20, 16)
-    Rm = int(Rm_bits, 2)
-    logger.debug(f"\tRm (bits 20~16) = {Rm_bits} ({Rm})")
+    rm_bits = mc.get_bits(20, 16)
+    rm = int(rm_bits, 2)
+    logger.debug("\tRm (bits 20~16) = %s (%d)", rm_bits, rm)
 
-    op_bits = mc.getBits(23, 21)
+    op_bits = mc.get_bits(23, 21)
     prefix = {"001": "s", "101": "u"}.get(op_bits, "")
     suffix = "l" if prefix else ""
     op = f"{prefix}m{addsub}{suffix}"
-    logger.debug(f"\top (bits 23~21) = {op_bits} ({op})")
+    logger.debug("\top (bits 23~21) = %s (%s)", op_bits, op)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} ({64 if reg == 'x' else 32}-bit result)")
+    logger.debug(
+        "\tsf (bit 31) = %s (%d-bit result)", reg_bit, 64 if reg == "x" else 32
+    )
 
     reg_sizes = {
         ("", "x"): ("x", "x", "x", "x"),
@@ -275,35 +280,37 @@ def decode_madd_msub(mc: MachineCode) -> str:
         ("l", "x"): ("x", "w", "w", "x"),
     }[(suffix, reg)]
 
-    return f"{op} {reg_sizes[0]}{Rd}, {reg_sizes[1]}{Rn}, {reg_sizes[2]}{Rm}, {reg_sizes[3]}{Ra}"
+    return f"{op} {reg_sizes[0]}{rd}, {reg_sizes[1]}{rn}, {reg_sizes[2]}{rm}, {reg_sizes[3]}{ra}"
 
 
 def decode_mulh(mc: MachineCode) -> str:
     """Decoding logic for Section 4.11"""
     logger.debug("Action: Rd = (Rn * Rm) >> 64")
 
-    Rd_bits = mc.getBits(4, 0)
-    Rd = int(Rd_bits, 2)
-    logger.debug(f"\tRd (bits 4~0) = {Rd_bits} ({Rd}) ")
+    rd_bits = mc.get_bits(4, 0)
+    rd = int(rd_bits, 2)
+    logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    Rm_bits = mc.getBits(20, 16)
-    Rm = int(Rm_bits, 2)
-    logger.debug(f"\tRm (bits 20~16) = {Rm_bits} ({Rm})")
+    rm_bits = mc.get_bits(20, 16)
+    rm = int(rm_bits, 2)
+    logger.debug("\tRm (bits 20~16) = %s (%d)", rm_bits, rm)
 
-    su_bit = mc.getBits(23)
+    su_bit = mc.get_bits(23)
     su = "u" if su_bit == "1" else "s"
-    logger.debug(f"\tS/U (bit 23) = {su_bit} ({su})")
+    logger.debug("\tS/U (bit 23) = %s (%s)", su_bit, su)
 
-    return f"{su}mulh x{Rd}, x{Rn}, x{Rm}"
+    return f"{su}mulh x{rd}, x{rn}, x{rm}"
 
 
 def decode_muls(mc: MachineCode) -> str:
+    """Find whether this is a mulh or regular mul instruction."""
+
     logger.debug("Checking op bits to find type of multiplication...")
-    if mc.checkMask(Mask("x10", 21)):
+    if mc.check_mask(Mask("x10", 21)):
         logger.debug("\top bits are x10; mulh instruction")
         return decode_mulh(mc)
     else:
@@ -315,37 +322,37 @@ def decode_ldp_stp(mc: MachineCode) -> str:
     """Decoding logic for Section 4.12"""
     logger.debug("Action: Rt:Rt2 <-dir-> Mem[Rn + imm * (4 if Wt:Wt2 else 8))]")
 
-    Rt_bits = mc.getBits(4, 0)
-    Rt = int(Rt_bits, 2)
-    logger.debug(f"\tRt (bits 4~0) = {Rt_bits} ({Rt}) ")
+    rt_bits = mc.get_bits(4, 0)
+    rt = int(rt_bits, 2)
+    logger.debug("\tRt (bits 4~0) = %s (%d)", rt_bits, rt)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    Rt2_bits = mc.getBits(14, 10)
-    Rt2 = int(Rt2_bits, 2)
-    logger.debug(f"\tRt2 (bits 14~10) = {Rt2_bits} ({Rt2})")
+    rt2_bits = mc.get_bits(14, 10)
+    rt2 = int(rt2_bits, 2)
+    logger.debug("\tRt2 (bits 14~10) = %s (%d)", rt2_bits, rt2)
 
-    imm_bits = mc.getBits(21, 15)
+    imm_bits = mc.get_bits(21, 15)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 21~10) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 21~10) = %s (%d) ", imm_bits, imm)
 
-    dir_bit = mc.getBits(22)
+    dir_bit = mc.get_bits(22)
     op = "ldp" if dir_bit == "1" else "stp"
-    logger.debug(f"\tdir (bit 22) = {dir_bit} ({op}) ")
+    logger.debug("\tdir (bit 22) = %s (%s)", dir_bit, op)
 
-    mode_bits = mc.getBits(24, 23)
+    mode_bits = mc.get_bits(24, 23)
     mode = {
         "01": "post-index",
         "10": "offset",
         "11": "pre-index",
     }[mode_bits]
-    logger.debug(f"\tmode (bit 24~23) = {mode_bits} ({mode})")
+    logger.debug("\tmode (bit 24~23) = %s (%s)", mode_bits, mode)
 
-    reg_bit = mc.getBits(31)
+    reg_bit = mc.get_bits(31)
     reg = "x" if reg_bit == "1" else "w"
-    logger.debug(f"\tsf (bit 31) = {reg_bit} (using {reg} registers)")
+    logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
     real_imm = imm * (8 if reg == "x" else 4)
 
@@ -355,26 +362,26 @@ def decode_ldp_stp(mc: MachineCode) -> str:
         pre_index = "!" if mode == "pre-index" else ""
         post_index = f", #{real_imm}" if mode == "post-index" else ""
 
-    return f"{op} {reg}{Rt}, {reg}{Rt2}, [x{Rn}{offset}]{pre_index}{post_index}"
+    return f"{op} {reg}{rt}, {reg}{rt2}, [x{rn}{offset}]{pre_index}{post_index}"
 
 
 def decode_ldr_str_uimm_offset(mc: MachineCode) -> str:
     """Decoding logic for Section 4.13"""
     logger.debug("Action: Rt <-(opc)-> Mem[Rn + imm]")
 
-    Rt_bits = mc.getBits(4, 0)
-    Rt = int(Rt_bits, 2)
-    logger.debug(f"\tRt (bits 4~0) = {Rt_bits} ({Rt}) ")
+    rt_bits = mc.get_bits(4, 0)
+    rt = int(rt_bits, 2)
+    logger.debug("\tRt (bits 4~0) = %s (%d)", rt_bits, rt)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    uimm_bits = mc.getBits(21, 10)
+    uimm_bits = mc.get_bits(21, 10)
     uimm = int(uimm_bits, 2)
-    logger.debug(f"\tuimm (bits 21~10) = {uimm_bits} ({uimm}) ")
+    logger.debug("\tuimm (bits 21~10) = %s (%d)", uimm_bits, uimm)
 
-    opc_bits = mc.getBits(23, 22)
+    opc_bits = mc.get_bits(23, 22)
     opc = {
         "00": "store",
         "01": "unsigned",
@@ -383,9 +390,9 @@ def decode_ldr_str_uimm_offset(mc: MachineCode) -> str:
     }[opc_bits]
     op = "str" if opc_bits == "00" else "ldr"
     signed_suffix = "s" if opc_bits[0] == "1" else ""
-    logger.debug(f"\topc (bits 23~22) = {opc_bits} ({opc}) ")
+    logger.debug("\topc (bits 23~22) = %s (%s)", opc_bits, opc)
 
-    data_size_bits = mc.getBits(31, 30)
+    data_size_bits = mc.get_bits(31, 30)
     data_size = {
         "00": "byte",
         "01": "hword",
@@ -401,34 +408,34 @@ def decode_ldr_str_uimm_offset(mc: MachineCode) -> str:
     if signed_suffix and not size_suffix:
         # If we're doing sign extension without byte/hword, must be word into Xt.
         size_suffix = "w"
-    logger.debug(f"\tdata size (bits 31~30) = {data_size_bits} ({data_size}) ")
+    logger.debug("\tdata size (bits 31~30) = %s (%s)", data_size_bits, data_size)
 
-    Rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
+    rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
 
-    return f"{op}{signed_suffix}{size_suffix} {Rt_size}{Rt}, [x{Rn}, #{real_uimm}]"
+    return f"{op}{signed_suffix}{size_suffix} {rt_size}{rt}, [x{rn}, #{real_uimm}]"
 
 
 def decode_ldr_str_pre_post_idx(mc: MachineCode):
     """Decoding logic for Section 4.14"""
     logger.debug("Action: Rt <-(opc)-> Mem[Rn + imm]")
 
-    Rt_bits = mc.getBits(4, 0)
-    Rt = int(Rt_bits, 2)
-    logger.debug(f"\tRt (bits 4~0) = {Rt_bits} ({Rt}) ")
+    rt_bits = mc.get_bits(4, 0)
+    rt = int(rt_bits, 2)
+    logger.debug("\tRt (bits 4~0) = %s (%d)", rt_bits, rt)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    pre_post_bit = mc.getBits(11)
+    pre_post_bit = mc.get_bits(11)
     pre_post = "pre-index" if pre_post_bit == "1" else "post-index"
-    logger.debug(f"\tpre/post-index (bit 11) = {pre_post_bit} ({pre_post}) ")
+    logger.debug("\tpre/post-index (bit 11) = %s (%s)", pre_post_bit, pre_post)
 
-    imm_bits = mc.getBits(20, 12)
+    imm_bits = mc.get_bits(20, 12)
     imm = twos_comp(imm_bits)
-    logger.debug(f"\timm (bits 20~12) = {imm_bits} ({imm}) ")
+    logger.debug("\timm (bits 20~12) = %s (%d)", imm_bits, imm)
 
-    opc_bits = mc.getBits(23, 22)
+    opc_bits = mc.get_bits(23, 22)
     opc = {
         "00": "store",
         "01": "unsigned",
@@ -437,9 +444,9 @@ def decode_ldr_str_pre_post_idx(mc: MachineCode):
     }[opc_bits]
     op = "str" if opc_bits == "00" else "ldr"
     signed_suffix = "s" if opc_bits[0] == "1" else ""
-    logger.debug(f"\topc (bits 23~22) = {opc_bits} ({opc}) ")
+    logger.debug("\topc (bits 23~22) = %s (%s)", opc_bits, opc)
 
-    data_size_bits = mc.getBits(31, 30)
+    data_size_bits = mc.get_bits(31, 30)
     data_size = {
         "00": "byte",
         "01": "hword",
@@ -453,31 +460,31 @@ def decode_ldr_str_pre_post_idx(mc: MachineCode):
     if signed_suffix and not size_suffix:
         # If we're doing sign extension without byte/hword, must be word into Xt.
         size_suffix = "w"
-    logger.debug(f"\tdata size (bits 31~30) = {data_size_bits} ({data_size}) ")
+    logger.debug("\tdata size (bits 31~30) = %s (%s)", data_size_bits, data_size)
 
-    Rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
+    rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
     index_suffix = f", #{imm}]!" if pre_post == "pre-index" else f"], #{imm}"
 
-    return f"{op}{signed_suffix}{size_suffix} {Rt_size}{Rt}, [x{Rn}{index_suffix}"
+    return f"{op}{signed_suffix}{size_suffix} {rt_size}{rt}, [x{rn}{index_suffix}"
 
 
 def decode_ldr_str_reg_offset(mc: MachineCode):
     """Decoding logic for Section 4.15"""
     logger.debug("Action: Rt <-(opc)-> Mem[Rn + Rm]")
 
-    Rt_bits = mc.getBits(4, 0)
-    Rt = int(Rt_bits, 2)
-    logger.debug(f"\tRt (bits 4~0) = {Rt_bits} ({Rt}) ")
+    rt_bits = mc.get_bits(4, 0)
+    rt = int(rt_bits, 2)
+    logger.debug("\tRt (bits 4~0) = %s (%d)", rt_bits, rt)
 
-    Rn_bits = mc.getBits(9, 5)
-    Rn = int(Rn_bits, 2)
-    logger.debug(f"\tRn (bits 9~5) = {Rn_bits} ({Rn})")
+    rn_bits = mc.get_bits(9, 5)
+    rn = int(rn_bits, 2)
+    logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
-    Rm_bits = mc.getBits(20, 16)
-    Rm = int(Rm_bits, 2)
-    logger.debug(f"\tRm (bits 20~16) = {Rm_bits} ({Rm})")
+    rm_bits = mc.get_bits(20, 16)
+    rm = int(rm_bits, 2)
+    logger.debug("\tRm (bits 20~16) = %s (%d)", rm_bits, rm)
 
-    opc_bits = mc.getBits(23, 22)
+    opc_bits = mc.get_bits(23, 22)
     opc = {
         "00": "store",
         "01": "unsigned",
@@ -486,9 +493,9 @@ def decode_ldr_str_reg_offset(mc: MachineCode):
     }[opc_bits]
     op = "str" if opc_bits == "00" else "ldr"
     signed_suffix = "s" if opc_bits[0] == "1" else ""
-    logger.debug(f"\topc (bits 23~22) = {opc_bits} ({opc}) ")
+    logger.debug("\topc (bits 23~22) = %s (%s)", opc_bits, opc)
 
-    data_size_bits = mc.getBits(31, 30)
+    data_size_bits = mc.get_bits(31, 30)
     data_size = {
         "00": "byte",
         "01": "hword",
@@ -502,14 +509,14 @@ def decode_ldr_str_reg_offset(mc: MachineCode):
     if signed_suffix and not size_suffix:
         # If we're doing sign extension without byte/hword, must be word into Xt.
         size_suffix = "w"
-    logger.debug(f"\tdata size (bits 31~30) = {data_size_bits} ({data_size}) ")
+    logger.debug("\tdata size (bits 31~30) = %s (%s)", data_size_bits, data_size)
 
-    Rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
+    rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
 
-    return f"{op}{signed_suffix}{size_suffix} {Rt_size}{Rt}, [x{Rn}, x{Rm}]"
+    return f"{op}{signed_suffix}{size_suffix} {rt_size}{rt}, [x{rn}, x{rm}]"
 
 
-def decode_nop(mc: MachineCode) -> str:
+def decode_nop(unused_mc: MachineCode) -> str:
     """Decoding logic for Section 4.16"""
     logger.debug("Action: literally does nothing")
     return "nop"

@@ -1,23 +1,29 @@
+"""Functions and definitions used across the project."""
+
+from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Optional
-from dataclasses import dataclass
 
 
 @dataclass
 class Mask:
+    """A bit-mask containing a sequence of 0/1/x and the bit this mask should be applied to."""
+
     mask: str
     lowest_bit_number: int
 
 
 class MachineCode(object):
+    """Contains bytes of a single instruction to check against masks and access individual bits."""
+
     def __init__(self, hex_string: str) -> None:
         self._value = int(hex_string.replace(" ", ""), 16)
 
-    def getHex(self) -> str:
+    def get_hex(self) -> str:
         """Return the machine code bytes as a hex string."""
         return f"{self._value:0x}"
 
-    def getBits(self, start: int, end: Optional[int] = None) -> str:
+    def get_bits(self, start: int, end: Optional[int] = None) -> str:
         """Return the requested bit(s) as a binary string."""
         if end is None:
             end = start
@@ -25,18 +31,20 @@ class MachineCode(object):
         diff = high - low + 1
         return f"{(self._value >> low) & ((2 ** diff) - 1):0{diff}b}"
 
-    def checkMask(self, op_mask: Mask) -> bool:
+    def check_mask(self, op_mask: Mask) -> bool:
         """Check whether the given op_mask matches the bits in this machine code."""
         reverse_mask = op_mask.mask[::-1]
-        for i in range(len(reverse_mask)):
-            if reverse_mask[i] == "x":
+        for i, b in enumerate(reverse_mask):
+            if b == "x":
                 continue
-            if reverse_mask[i] != self.getBits(op_mask.lowest_bit_number + i):
+            if b != self.get_bits(op_mask.lowest_bit_number + i):
                 return False
         return True
 
 
 class ARM64Instruction(object):
+    """Stores machine code format and decoding function for a single instruction."""
+
     def __init__(
         self, instr_bit_format: Mask, decode_fun: Callable[[MachineCode], str]
     ) -> None:
@@ -44,7 +52,8 @@ class ARM64Instruction(object):
         self._decode = decode_fun
 
     def decode(self, mc: MachineCode) -> str:
-        assert mc.checkMask(
+        """Try to parse the bits from the given machine code into an asm instruction."""
+        assert mc.check_mask(
             self._format
         ), "Given machine code does not match this instruction's format"
         return self._decode(mc)
