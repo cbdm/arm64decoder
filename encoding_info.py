@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 def encode_sudiv(matches: re.Match[str]) -> MachineCode:
     """Encoding logic for Section 4.07"""
     logger.debug("Creating machine code for a div instruction")
+
     binary_format = "{size}0011010110{rm}00001{sign}{rn}{rd}"
+    logger.debug("Instruction format: %s", binary_format)
 
     sign, size_rd, rd, size_rn, rn, size_rm, rm = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
