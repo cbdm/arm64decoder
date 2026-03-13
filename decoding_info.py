@@ -82,7 +82,7 @@ def decode_uncond_branch_imm(mc: MachineCode) -> str:
     link = "l" if link_bit == "1" else ""
     logger.debug("\top (bit 31) = %s", link_bit)
 
-    return f"b{link} label (label is {imm * 4} bytes away from PC)"
+    return f"b{link} label // (label is {imm * 4} bytes away from PC)"
 
 
 def decode_uncond_branch_reg(mc: MachineCode) -> str:
@@ -112,7 +112,7 @@ def decode_cond_branch_imm(mc: MachineCode) -> str:
     imm = twos_comp(imm_bits)
     logger.debug("\timm (bits 23~5) = %s (%d) ", imm_bits, imm)
 
-    return f"b.{cc.name} label (label is {imm * 4} bytes away from PC)"
+    return f"b.{cc.name} label // (label is {imm * 4} bytes away from PC)"
 
 
 def decode_comp_branch_imm(mc: MachineCode) -> str:
@@ -135,7 +135,7 @@ def decode_comp_branch_imm(mc: MachineCode) -> str:
     reg = "x" if reg_bit == "1" else "w"
     logger.debug("\tsf (bit 31) = %s (using %s registers)", reg_bit, reg)
 
-    return f"cb{op}z {reg}{rt}, label (label is {imm * 4} bytes away from PC)"
+    return f"cb{op}z {reg}{rt}, label // (label is {imm * 4} bytes away from PC)"
 
 
 def decode_sudiv(mc: MachineCode) -> str:
