@@ -3,7 +3,7 @@
 import logging
 import re
 
-from utils import MachineCode, to_twos_comp
+from utils import CCs, MachineCode, to_twos_comp
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +89,111 @@ def encode_mov(matches: re.Match[str]) -> MachineCode:
         hw=hw,
         imm=quadrant,
         Rd=f"{int(rd):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_uncond_branch_imm(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.03"""
+    logger.debug("Creating machine code for a b instruction")
+
+    binary_format = "{link}00101{imm}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    link, imm = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\tlink: %s", link)
+    logger.debug("\timm: %s", imm)
+
+    int_imm = int(imm)
+    assert int_imm % 4 == 0, "The immediate has to be a multiple of 4"
+
+    binary_result = binary_format.format(
+        link=1 if link is not None else 0,
+        imm=to_twos_comp(int_imm // 4, 26),
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_uncond_branch_reg(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.04"""
+    logger.debug("Creating machine code for a br instruction")
+
+    binary_format = "1101011000{link}11111000000{Rn}00000"
+    logger.debug("Instruction format: %s", binary_format)
+
+    link, rn = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\tlink: %s", link)
+    logger.debug("\trn: %s", rn)
+
+    binary_result = binary_format.format(
+        link=1 if link is not None else 0,
+        Rn=f"{int(rn):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_cond_branch_imm(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.05"""
+    logger.debug("Creating machine code for a b.cc instruction")
+
+    binary_format = "01010100{imm}0{CC}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    cc, imm = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\tcc: %s", cc)
+    logger.debug("\timm: %s", imm)
+
+    int_imm = int(imm)
+    assert int_imm % 4 == 0, "The immediate has to be a multiple of 4"
+
+    binary_result = binary_format.format(
+        imm=to_twos_comp(int_imm // 4, 19),
+        CC=f"{CCs.__members__[cc].value-1:04b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_comp_branch_imm(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.06"""
+    logger.debug("Creating machine code for a cbz instruction")
+
+    binary_format = "{size}011010{op}{imm}{Rt}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    op, size_rt, rt, imm = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\top: %s", op)
+    logger.debug("\tsize_rt: %s", size_rt)
+    logger.debug("\trt: %s", rt)
+    logger.debug("\timm: %s", imm)
+
+    int_imm = int(imm)
+    assert int_imm % 4 == 0, "The immediate has to be a multiple of 4"
+
+    binary_result = binary_format.format(
+        size=1 if size_rt == "x" else 0,
+        op=0 if op is None else 1,
+        imm=to_twos_comp(int_imm // 4, 19),
+        Rt=f"{int(rt):05b}",
     )
     logger.debug("Binary result: %s", binary_result)
 

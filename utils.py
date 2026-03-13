@@ -163,7 +163,6 @@ def equivalent_asm(instr1: str, instr2: str) -> bool:
             a1_val = int(a1[1:], 0)
             a2_val = int(a2[1:], 0)
 
-            # If they're not the same int value, they're different regardless of base.
             # If their int values are the same, these args are equivalent.
             if a1_val == a2_val:
                 continue
