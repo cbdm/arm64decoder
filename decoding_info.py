@@ -313,9 +313,9 @@ def decode_muls(mc: MachineCode) -> str:
     if mc.check_mask(Mask("x10", 21)):
         logger.debug("\top bits are x10; mulh instruction")
         return decode_mulh(mc)
-    else:
-        logger.debug("\top bits are *not* x10; regular mul/neg instruction")
-        return decode_madd_msub(mc)
+
+    logger.debug("\top bits are *not* x10; regular mul/neg instruction")
+    return decode_madd_msub(mc)
 
 
 def decode_ldp_stp(mc: MachineCode) -> str:

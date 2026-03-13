@@ -170,7 +170,20 @@ def equivalent_asm(instr1: str, instr2: str) -> bool:
             # Otherwise, they differ and these instructions are not equivalent.
             return False
 
-        # If args are *not* immediates, compare their values directly.
+        # Check if they're shift operations.
+        elif a1.startswith("lsl#") and a2.startswith("lsl#"):
+            # If they *are* shifts, compare the immediate used based on its int value.
+            a1_val = int(a1[len("lsl#") :], 0)
+            a2_val = int(a2[len("lsl#") :], 0)
+
+            # If their int values are the same, these args are equivalent.
+            if a1_val == a2_val:
+                continue
+
+            # Otherwise, they differ and these instructions are not equivalent.
+            return False
+
+        # If args do *not* have immediates, compare their values directly.
         if a1 != a2:
             return False
 

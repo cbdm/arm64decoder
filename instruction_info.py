@@ -10,7 +10,7 @@ from utils import ARM64Instruction, MachineCode, Mask
 add_sub_imm = ARM64Instruction(
     instr_bit_format=Mask("xxx100010xxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_add_sub_imm,
-    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*#((-)?(0x|0b)?(\d+))(,\s*lsl #12)?",
+    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*#((-)?(0x|0b)?(\d+))(,\s*lsl\s*#12)?",
     encode_fun=encoding_info.encode_add_sub_imm,
 )
 
@@ -59,22 +59,22 @@ sudiv = ARM64Instruction(
 logical = ARM64Instruction(
     instr_bit_format=Mask("xxx0101000xxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_logical,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"(and|orr|eor|ands|bic|orn|eon|bics)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*lsl\s*#((0x|0b)?(\d+)))?",
+    encode_fun=encoding_info.encode_logical,
 )
 
 add_sub_reg = ARM64Instruction(
     instr_bit_format=Mask("xxx01011000xxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_add_sub_reg,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*lsl\s*#((0x|0b)?(\d+)))?",
+    encode_fun=encoding_info.encode_add_sub_reg,
 )
 
 muls = ARM64Instruction(
     instr_bit_format=Mask("x0011011xxxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_muls,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"(madd|msub|smaddl|umaddl|smsubl|umsubl|smulh|umulh)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*(x|w)(\d{1,2}))?",
+    encode_fun=encoding_info.encode_muls,
 )
 
 ldp_stp = ARM64Instruction(

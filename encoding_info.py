@@ -233,3 +233,192 @@ def encode_sudiv(matches: re.Match[str]) -> MachineCode:
     mc = MachineCode.from_binary(binary_result)
     logger.debug("Hex result: %s", mc.get_pretty_hex())
     return mc
+
+
+def encode_logical(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.08"""
+    logger.debug("Creating machine code for a logical instruction")
+
+    binary_format = "{size}{op}0101000{N}{Rm}{uimm}{Rn}{Rd}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    ops, size_rd, rd, size_rn, rn, size_rm, rm, shift, uimm, base, value = (
+        matches.groups()
+    )
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\tops: %s", ops)
+    logger.debug("\tsize_rd: %s", size_rd)
+    logger.debug("\trd: %s", rd)
+    logger.debug("\tsize_rn: %s", size_rn)
+    logger.debug("\trn: %s", rn)
+    logger.debug("\tsize_rm: %s", size_rm)
+    logger.debug("\trm: %s", rm)
+    logger.debug("\tshift: %s", shift)
+    logger.debug("\tbase: %s", base)
+    logger.debug("\tvalue: %s", value)
+
+    assert size_rd == size_rn == size_rm, "All registers must be of same size"
+
+    op, n = {
+        "and": ("00", 0),
+        "orr": ("01", 0),
+        "eor": ("10", 0),
+        "ands": ("11", 0),
+        "bic": ("00", 1),
+        "orn": ("01", 1),
+        "eon": ("10", 1),
+        "bics": ("11", 1),
+    }[ops]
+
+    binary_result = binary_format.format(
+        size=1 if size_rd == "x" else 0,
+        op=op,
+        N=n,
+        Rm=f"{int(rm):05b}",
+        uimm=f"{int(uimm, 0):06b}",
+        Rn=f"{int(rn):05b}",
+        Rd=f"{int(rd):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_add_sub_reg(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.09"""
+    logger.debug("Creating machine code for a add/sum immediate instruction")
+
+    binary_format = "{size}{op}{s_suffix}01011000{Rm}{uimm}{Rn}{Rd}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    (
+        op,
+        s_bit,
+        size_rd,
+        rd,
+        size_rn,
+        rn,
+        size_rm,
+        rm,
+        shift,
+        uimm,
+        uimm_base,
+        uimm_val,
+    ) = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\top: %s", op)
+    logger.debug("\ts_bit: %s", s_bit)
+    logger.debug("\tsize_rd: %s", size_rd)
+    logger.debug("\trd: %s", rd)
+    logger.debug("\tsize_rn: %s", size_rn)
+    logger.debug("\trn: %s", rn)
+    logger.debug("\tsize_rn: %s", size_rm)
+    logger.debug("\trn: %s", rm)
+    logger.debug("\tshift: %s", shift)
+    logger.debug("\tuimm: %s", uimm)
+    logger.debug("\tuimm_base: %s", uimm_base)
+    logger.debug("\tuimm_val: %s", uimm_val)
+
+    assert size_rd == size_rm == size_rn, "All registers must be of same size"
+
+    binary_result = binary_format.format(
+        size=1 if size_rd == "x" else 0,
+        op=1 if op == "sub" else 0,
+        s_suffix=1 if s_bit is not None else 0,
+        Rm=f"{int(rm):05b}",
+        uimm=f"{int(uimm if uimm is not None else '0', 0):06b}",
+        Rn=f"{int(rn):05b}",
+        Rd=f"{int(rd):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_madd_msub(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.10"""
+    logger.debug("Creating machine code for a madd/msub instruction")
+
+    binary_format = "{result_size}0011011{op}{Rm}{addsub}{Ra}{Rn}{Rd}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    print(f"{matches.groups()=}")
+    op, size_rd, rd, size_rn, rn, size_rm, rm, _, size_ra, ra = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\top: %s", op)
+    logger.debug("\tsize_rd: %s", size_rd)
+    logger.debug("\trd: %s", rd)
+    logger.debug("\tsize_rn: %s", size_rn)
+    logger.debug("\trn: %s", rn)
+    logger.debug("\tsize_rm: %s", size_rm)
+    logger.debug("\trm: %s", rm)
+    logger.debug("\tsize_ra: %s", size_ra)
+    logger.debug("\tra: %s", ra)
+
+    assert size_ra == size_rd, "Ra and Rd must have the same size"
+    assert size_rn == size_rm, "Rn and Rm must have the same size"
+
+    op_bits, addsub = {
+        "madd": ("000", 0),
+        "msub": ("000", 1),
+        "smaddl": ("001", 0),
+        "smsubl": ("001", 1),
+        "umaddl": ("101", 0),
+        "umsubl": ("101", 1),
+    }[op]
+
+    binary_result = binary_format.format(
+        result_size=1 if size_rd == "x" else 0,
+        op=op_bits,
+        Rm=f"{int(rm):05b}",
+        addsub=addsub,
+        Ra=f"{int(ra):05b}",
+        Rn=f"{int(rn):05b}",
+        Rd=f"{int(rd):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_mulh(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.11"""
+    logger.debug("Creating machine code for a mulh instruction")
+
+    binary_format = "10011011{sign}10{Rm}011111{Rn}{Rd}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    op, _, rd, _, rn, _, rm, *_ = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\top: %s", op)
+    logger.debug("\trd: %s", rd)
+    logger.debug("\trn: %s", rn)
+    logger.debug("\trm: %s", rm)
+
+    binary_result = binary_format.format(
+        sign=0 if op == "smulh" else 1,
+        Rm=f"{int(rm):05b}",
+        Rn=f"{int(rn):05b}",
+        Rd=f"{int(rd):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_muls(matches: re.Match[str]) -> MachineCode:
+    """Find whether this is a mulh or regular mul instruction."""
+
+    op, *_ = matches.groups()
+    if op in {"smulh", "umulh"}:
+        return encode_mulh(matches)
+
+    return encode_madd_msub(matches)
