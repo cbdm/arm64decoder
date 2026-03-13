@@ -405,6 +405,7 @@ def decode_ldr_str_uimm_offset(mc: MachineCode) -> str:
     }.get(data_size, "")
     # Scale immediate based on data size's natural alignment
     real_uimm = uimm * {"byte": 1, "hword": 2, "word": 4, "xword": 8}[data_size]
+    offset = f", #{real_uimm}" if real_uimm else ""
     if signed_suffix and not size_suffix:
         # If we're doing sign extension without byte/hword, must be word into Xt.
         size_suffix = "w"
@@ -412,7 +413,7 @@ def decode_ldr_str_uimm_offset(mc: MachineCode) -> str:
 
     rt_size = "x" if (data_size == "xword" or opc == "signed into Xt") else "w"
 
-    return f"{op}{signed_suffix}{size_suffix} {rt_size}{rt}, [x{rn}, #{real_uimm}]"
+    return f"{op}{signed_suffix}{size_suffix} {rt_size}{rt}, [x{rn}{offset}]"
 
 
 def decode_ldr_str_pre_post_idx(mc: MachineCode):

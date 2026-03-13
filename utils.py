@@ -136,6 +136,11 @@ def to_twos_comp(value: int, length: int) -> str:
     return f"{twos_comp_value:0{length}b}"
 
 
+def equivalent_immediates(imm1: str, imm2: str) -> bool:
+    """Check whether two immediate strings with possibly different bases are equivalent."""
+    return int(imm1, 0) == int(imm2, 0)
+
+
 def equivalent_asm(instr1: str, instr2: str) -> bool:
     """Check whether two asm instructions are equivalent."""
 
@@ -159,25 +164,27 @@ def equivalent_asm(instr1: str, instr2: str) -> bool:
     for a1, a2 in zip(parsed_args1, parsed_args2):
         # Check if they're immediates.
         if a1.startswith("#") and a2.startswith("#"):
-            # If they *are* immediates, parse them into ints so we can compare their actual values.
-            a1_val = int(a1[1:], 0)
-            a2_val = int(a2[1:], 0)
+            # Check if they're pre-index immediates.
+            if a1.endswith("!") and a2.endswith("!"):
+                a1 = a1[:-1]
+                a2 = a2[:-1]
 
-            # If their int values are the same, these args are equivalent.
-            if a1_val == a2_val:
+            # Check if they're offset immediates.
+            if a1.endswith("]") and a2.endswith("]"):
+                a1 = a1[:-1]
+                a2 = a2[:-1]
+
+            # If they *are* immediates, compare their actual values.
+            if equivalent_immediates(a1[1:], a2[1:]):
                 continue
 
             # Otherwise, they differ and these instructions are not equivalent.
             return False
 
         # Check if they're shift operations.
-        elif a1.startswith("lsl#") and a2.startswith("lsl#"):
-            # If they *are* shifts, compare the immediate used based on its int value.
-            a1_val = int(a1[len("lsl#") :], 0)
-            a2_val = int(a2[len("lsl#") :], 0)
-
-            # If their int values are the same, these args are equivalent.
-            if a1_val == a2_val:
+        if a1.startswith("lsl#") and a2.startswith("lsl#"):
+            # If they *are* shifts, compare the immediate used based on their int values.
+            if equivalent_immediates(a1[len("lsl#") :], a2[len("lsl#") :]):
                 continue
 
             # Otherwise, they differ and these instructions are not equivalent.

@@ -346,7 +346,6 @@ def encode_madd_msub(matches: re.Match[str]) -> MachineCode:
     binary_format = "{result_size}0011011{op}{Rm}{addsub}{Ra}{Rn}{Rd}"
     logger.debug("Instruction format: %s", binary_format)
 
-    print(f"{matches.groups()=}")
     op, size_rd, rd, size_rn, rn, size_rm, rm, _, size_ra, ra = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
     logger.debug("\top: %s", op)
@@ -422,3 +421,143 @@ def encode_muls(matches: re.Match[str]) -> MachineCode:
         return encode_mulh(matches)
 
     return encode_madd_msub(matches)
+
+
+def encode_ldr_str_uimm_offset(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.13"""
+    logger.debug("Creating machine code for a ldr/str offset instruction")
+
+    binary_format = "{size}111001{opc}{uimm}{Rn}{Rt}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    (
+        op,
+        signed,
+        size,
+        size_rt,
+        rt,
+        rn,
+        offset,
+        offset_uimm,
+        offset_base,
+        offset_value,
+    ) = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\top: %s", op)
+    logger.debug("\tsigned: %s", signed)
+    logger.debug("\tsize: %s", size)
+    logger.debug("\tsize_rt: %s", size_rt)
+    logger.debug("\trt: %s", rt)
+    logger.debug("\trn: %s", rn)
+    logger.debug("\toffset: %s", offset)
+    logger.debug("\toffset_uimm: %s", offset_uimm)
+    logger.debug("\toffset_base: %s", offset_base)
+    logger.debug("\toffset_value: %s", offset_value)
+
+    assert signed is None or op == "ldr", "There's no sign extension for str"
+    assert size is None or signed, "Need to define a size for sign extension"
+
+    opc, result_size = {
+        "str": ("00", "11" if size_rt == "x" else "10"),
+        "ldr": ("01", "11" if size_rt == "x" else "10"),
+        "ldrb": ("01", "00"),
+        "ldrh": ("01", "01"),
+        "ldrsb": ("10" if size_rt == "x" else "11", "00"),
+        "ldrsh": ("10" if size_rt == "x" else "11", "01"),
+        "ldrsw": ("10", "10"),
+    }[f"{op}{signed}{size}"]
+
+    align = 2 ** int(result_size, 2)
+    uimm = int(offset_uimm, 0) if offset_uimm else 0
+    assert uimm % align == 0, "Offset needs to be naturally aligned to the data size"
+
+    binary_result = binary_format.format(
+        size=result_size,
+        opc=opc,
+        uimm=f"{uimm // align:012b}",
+        Rn=f"{int(rn, 0):05b}",
+        Rt=f"{int(rt, 0):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
+
+
+def encode_ldr_str_pre_post_idx(matches: re.Match[str]) -> MachineCode:
+    """Encoding logic for Section 4.14"""
+    logger.debug("Creating machine code for a ldr/str pre/post-index instruction")
+
+    binary_format = "{size}111000{opc}0{imm}{prepost}1{Rn}{Rt}"
+    logger.debug("Instruction format: %s", binary_format)
+
+    (
+        op,
+        signed,
+        size,
+        size_rt,
+        rt,
+        rn,
+        offset,
+        pre_offset,
+        pre_offset_imm,
+        pre_offset_sign,
+        pre_offset_base,
+        pre_offset_value,
+        post_offset,
+        post_offset_imm,
+        post_offset_sign,
+        post_offset_base,
+        post_offset_value,
+    ) = matches.groups()
+    logger.debug("Parsed following information from given asm instruction:")
+    logger.debug("\top: %s", op)
+    logger.debug("\tsigned: %s", signed)
+    logger.debug("\tsize: %s", size)
+    logger.debug("\tsize_rt: %s", size_rt)
+    logger.debug("\trt: %s", rt)
+    logger.debug("\trn: %s", rn)
+    logger.debug("\toffset: %s", offset)
+    logger.debug("\tpre_offset: %s", pre_offset)
+    logger.debug("\tpre_offset_imm: %s", pre_offset_imm)
+    logger.debug("\tpre_offset_sign: %s", pre_offset_sign)
+    logger.debug("\tpre_offset_base: %s", pre_offset_base)
+    logger.debug("\tpre_offset_value: %s", pre_offset_value)
+    logger.debug("\tpost_offset: %s", post_offset)
+    logger.debug("\tpost_offset_imm: %s", post_offset_imm)
+    logger.debug("\tpost_offset_sign: %s", post_offset_sign)
+    logger.debug("\tpost_offset_base: %s", post_offset_base)
+    logger.debug("\tpost_offset_value: %s", post_offset_value)
+
+    assert signed is None or op == "ldr", "There's no sign extension for str"
+    assert size is None or signed, "Need to define a size for sign extension"
+
+    opc, result_size = {
+        "str": ("00", "11" if size_rt == "x" else "10"),
+        "ldr": ("01", "11" if size_rt == "x" else "10"),
+        "ldrb": ("01", "00"),
+        "ldrh": ("01", "01"),
+        "ldrsb": ("10" if size_rt == "x" else "11", "00"),
+        "ldrsh": ("10" if size_rt == "x" else "11", "01"),
+        "ldrsw": ("10", "10"),
+    }[f"{op}{signed}{size}"]
+    active_imm, prepost = (
+        (pre_offset_imm, 1) if pre_offset_imm else (post_offset_imm, 0)
+    )
+
+    binary_format = "{size}111000{opc}0{imm}{prepost}1{Rn}{Rt}"
+
+    binary_result = binary_format.format(
+        size=result_size,
+        opc=opc,
+        imm=to_twos_comp(int(active_imm, 0), 9),
+        prepost=prepost,
+        Rn=f"{int(rn, 0):05b}",
+        Rt=f"{int(rt, 0):05b}",
+    )
+    logger.debug("Binary result: %s", binary_result)
+
+    mc = MachineCode.from_binary(binary_result)
+    logger.debug("Hex result: %s", mc.get_pretty_hex())
+    return mc
