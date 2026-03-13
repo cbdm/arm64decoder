@@ -32,7 +32,7 @@ def encode_instr(instr: List[str]) -> str:
             mc = details.instruction.encode(user_input)
             logger.debug("\t-> possibly encoded as: %s", mc.get_pretty_hex())
 
-            # TODO: cam we hide debug output for the decode function call?
+            # TODO: can we hide debug output for the decode function call?
             decoded_mc = details.instruction.decode(mc)
             logger.debug("\t-> which would be decoded as: %s", decoded_mc)
 
