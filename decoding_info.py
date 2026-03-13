@@ -2,7 +2,7 @@
 
 import logging
 
-from utils import CCs, MachineCode, Mask, twos_comp
+from utils import CCs, MachineCode, Mask, from_twos_comp
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def decode_add_sub_imm(mc: MachineCode) -> str:
     logger.debug("\tRn (bits 9~5) = %s (%d)", rn_bits, rn)
 
     imm_bits = mc.get_bits(21, 10)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 21~10) = %s (%d) ", imm_bits, imm)
 
     sh_bit = mc.get_bits(22)
@@ -55,7 +55,7 @@ def decode_mov_wide(mc: MachineCode) -> str:
     logger.debug("\tRd (bits 4~0) = %s (%d) ", rd_bits, rd)
 
     imm_bits = mc.get_bits(20, 5)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 20~5) = %s (%d) ", imm_bits, imm)
 
     hw_bits = mc.get_bits(21, 22)
@@ -75,7 +75,7 @@ def decode_uncond_branch_imm(mc: MachineCode) -> str:
     logger.debug("Action: PC += (imm*4) *and* X30 = PC+4 *if* op")
 
     imm_bits = mc.get_bits(25, 0)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 25~0) = %s (%d) ", imm_bits, imm)
 
     link_bit = mc.get_bits(31)
@@ -109,7 +109,7 @@ def decode_cond_branch_imm(mc: MachineCode) -> str:
     logger.debug("\tCC (bits 3~0) = %s (%s) ", cc_bits, cc)
 
     imm_bits = mc.get_bits(23, 5)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 23~5) = %s (%d) ", imm_bits, imm)
 
     return f"b.{cc.name} label // (label is {imm * 4} bytes away from PC)"
@@ -124,7 +124,7 @@ def decode_comp_branch_imm(mc: MachineCode) -> str:
     logger.debug("\tRt (bits 4~0) = %s (%d)", rt_bits, rt)
 
     imm_bits = mc.get_bits(23, 5)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 23~5) = %s (%d) ", imm_bits, imm)
 
     op_bit = mc.get_bits(24)
@@ -335,7 +335,7 @@ def decode_ldp_stp(mc: MachineCode) -> str:
     logger.debug("\tRt2 (bits 14~10) = %s (%d)", rt2_bits, rt2)
 
     imm_bits = mc.get_bits(21, 15)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 21~10) = %s (%d) ", imm_bits, imm)
 
     dir_bit = mc.get_bits(22)
@@ -432,7 +432,7 @@ def decode_ldr_str_pre_post_idx(mc: MachineCode):
     logger.debug("\tpre/post-index (bit 11) = %s (%s)", pre_post_bit, pre_post)
 
     imm_bits = mc.get_bits(20, 12)
-    imm = twos_comp(imm_bits)
+    imm = from_twos_comp(imm_bits)
     logger.debug("\timm (bits 20~12) = %s (%d)", imm_bits, imm)
 
     opc_bits = mc.get_bits(23, 22)

@@ -14,7 +14,7 @@ class Mask:
     lowest_bit_number: int
 
 
-class MachineCode(object):
+class MachineCode:
     """Contains bytes of a single instruction to check against masks and access individual bits."""
 
     def __init__(self, hex_string: str) -> None:
@@ -68,7 +68,7 @@ class MachineCode(object):
         return True
 
 
-class ARM64Instruction(object):
+class ARM64Instruction:
     """Stores machine code format and decoding function for a single instruction."""
 
     def __init__(
@@ -120,13 +120,20 @@ CCs = Enum(
 )
 
 
-def twos_comp(binary_string: str) -> int:
+def from_twos_comp(binary_string: str) -> int:
     """Convert the given binary string into a signed two's complement integer."""
     # Adapted from: https://stackoverflow.com/a/9147327
     val, bits = int(binary_string, 2), len(binary_string)
     if (val & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
         val = val - (1 << bits)  # compute negative value
     return val
+
+
+def to_twos_comp(value: int, length: int) -> str:
+    """Convert the given value into a two's complement string of appropriate length."""
+    # Adapted from: https://stackoverflow.com/a/7823051
+    twos_comp_value = (value + (1 << length)) % (1 << length)
+    return f"{twos_comp_value:0{length}b}"
 
 
 def equivalent_asm(instr1: str, instr2: str) -> bool:
@@ -144,9 +151,29 @@ def equivalent_asm(instr1: str, instr2: str) -> bool:
     parsed_args1 = "".join(args1).split(",")
     parsed_args2 = "".join(args2).split(",")
 
-    # If different arguments, not a match.
-    if parsed_args1 != parsed_args2:
+    # If different number of arguments, not a match.
+    if len(parsed_args1) != len(parsed_args2):
         return False
+
+    # Compare each argument individually so we can account for, e.g., different bases.
+    for a1, a2 in zip(parsed_args1, parsed_args2):
+        # Check if they're immediates.
+        if a1.startswith("#") and a2.startswith("#"):
+            # If they *are* immediates, parse them into ints so we can compare their actual values.
+            a1_val = int(a1[1:], 0)
+            a2_val = int(a2[1:], 0)
+
+            # If they're not the same int value, they're different regardless of base.
+            # If their int values are the same, these args are equivalent.
+            if a1_val == a2_val:
+                continue
+
+            # Otherwise, they differ and these instructions are not equivalent.
+            return False
+
+        # If args are *not* immediates, compare their values directly.
+        if a1 != a2:
+            return False
 
     # If no differences, they're equivalent.
     return True

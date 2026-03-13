@@ -4,18 +4,21 @@ import decoding_info
 import encoding_info
 from utils import ARM64Instruction, MachineCode, Mask
 
+# Turn off linting for long lines to allow long regex strings.
+# pylint: disable=line-too-long
+
 add_sub_imm = ARM64Instruction(
     instr_bit_format=Mask("xxx100010xxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_add_sub_imm,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s+#((-)?(0x|0b)?(\d+))(,\s*lsl #12)?",
+    encode_fun=encoding_info.encode_add_sub_imm,
 )
 
 mov_wide = ARM64Instruction(
     instr_bit_format=Mask("x10100101xxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_mov_wide,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"movz?\s*(x|w)(\d{1,2}),\s+#((-)?(0x|0b)?(\d+))",
+    encode_fun=encoding_info.encode_mov,
 )
 
 uncond_branch_imm = ARM64Instruction(
@@ -49,7 +52,7 @@ comp_branch_imm = ARM64Instruction(
 sudiv = ARM64Instruction(
     instr_bit_format=Mask("x0011010110xxxxx00001xxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_sudiv,
-    instr_asm_regex=r"(s|u)div\W+(x|w)(\d{1,2}),\W*(x|w)(\d{1,2}),\W*(x|w)(\d{1,2})",
+    instr_asm_regex=r"(s|u)div\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})",
     encode_fun=encoding_info.encode_sudiv,
 )
 
