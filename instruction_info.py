@@ -10,14 +10,14 @@ from utils import ARM64Instruction, MachineCode, Mask
 add_sub_imm = ARM64Instruction(
     instr_bit_format=Mask("xxx100010xxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_add_sub_imm,
-    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*#((-)?(0x|0b)?(\d+))(,\s*lsl\s*#12)?",
+    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))(,\s*lsl\s*#12)?",
     encode_fun=encoding_info.encode_add_sub_imm,
 )
 
 mov_wide = ARM64Instruction(
     instr_bit_format=Mask("x10100101xxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_mov_wide,
-    instr_asm_regex=r"movz?\s+(x|w)(\d{1,2}),\s*#((-)?(0x|0b)?(\d+))",
+    instr_asm_regex=r"movz?\s+(x|w)(\d{1,2}),\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))",
     encode_fun=encoding_info.encode_mov,
 )
 
@@ -59,14 +59,14 @@ sudiv = ARM64Instruction(
 logical = ARM64Instruction(
     instr_bit_format=Mask("xxx0101000xxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_logical,
-    instr_asm_regex=r"(and|orr|eor|ands|bic|orn|eon|bics)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*lsl\s*#((0x|0b)?(\d+)))?",
+    instr_asm_regex=r"(and|orr|eor|ands|bic|orn|eon|bics)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*lsl\s*#((0x[0-9a-f]+|0b[0-1]+|\d+)))?",
     encode_fun=encoding_info.encode_logical,
 )
 
 add_sub_reg = ARM64Instruction(
     instr_bit_format=Mask("xxx01011000xxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_add_sub_reg,
-    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*lsl\s*#((0x|0b)?(\d+)))?",
+    instr_asm_regex=r"(add|sub)(s)?\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*(x|w)(\d{1,2})(,\s*lsl\s*#((0x[0-9a-f]+|0b[0-1]+|\d+)))?",
     encode_fun=encoding_info.encode_add_sub_reg,
 )
 
@@ -80,21 +80,21 @@ muls = ARM64Instruction(
 ldp_stp = ARM64Instruction(
     instr_bit_format=Mask("x010100xxxxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_ldp_stp,
-    instr_asm_regex=r"(stp|ldp)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*\[x(\d{1,2})((\])|(,\s*#((-)?(0x|0b)?(\d+))\])|(,\s*#((-)?(0x|0b)?(\d+))\]!)|(\],\s*#((-)?(0x|0b)?(\d+))))",
+    instr_asm_regex=r"(stp|ldp)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*\[x(\d{1,2})((\])|(,\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))\])|(,\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))\]!)|(\],\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))))",
     encode_fun=encoding_info.encode_ldp_stp,
 )
 
 ldr_str_uimm_offset = ARM64Instruction(
     instr_bit_format=Mask("xx111001xxxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_ldr_str_uimm_offset,
-    instr_asm_regex=r"(ldr|str)(s)?(b|h|w)?\s+(x|w)(\d{1,2}),\s*\[x(\d{1,2})(,\s*#((0x|0b)?(\d+)))?\]",
+    instr_asm_regex=r"(ldr|str)(s)?(b|h|w)?\s+(x|w)(\d{1,2}),\s*\[x(\d{1,2})(,\s*#((0x[0-9a-f]+|0b[0-1]+|\d+)))?\]",
     encode_fun=encoding_info.encode_ldr_str_uimm_offset,
 )
 
 ldr_str_pre_post_idx = ARM64Instruction(
     instr_bit_format=Mask("xx111000xx0xxxxxxxxxx1xxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_ldr_str_pre_post_idx,
-    instr_asm_regex=r"(ldr|str)(s)?(b|h|w)?\s+(x|w)(\d{1,2}),\s*\[x(\d{1,2})((,\s*#((-)?(0x|0b)?(\d+))\]!)|(\],\s*#((-)?(0x|0b)?(\d+))))",
+    instr_asm_regex=r"(ldr|str)(s)?(b|h|w)?\s+(x|w)(\d{1,2}),\s*\[x(\d{1,2})((,\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))\]!)|(\],\s*#((-)?(0x[0-9a-f]+|0b[0-1]+|\d+))))",
     encode_fun=encoding_info.encode_ldr_str_pre_post_idx,
 )
 

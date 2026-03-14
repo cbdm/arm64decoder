@@ -15,7 +15,7 @@ def encode_add_sub_imm(matches: re.Match[str]) -> MachineCode:
     binary_format = "{size}{op}{s_suffix}100010{shift}{imm}{Rn}{Rd}"
     logger.debug("Instruction format: %s", binary_format)
 
-    op, s_bit, size_rd, rd, size_rn, rn, imm, imm_sign, imm_base, imm_val, shift = (
+    op, s_bit, size_rd, rd, size_rn, rn, imm, imm_sign, imm_val, shift = (
         matches.groups()
     )
     logger.debug("Parsed following information from given asm instruction:")
@@ -27,7 +27,6 @@ def encode_add_sub_imm(matches: re.Match[str]) -> MachineCode:
     logger.debug("\trn: %s", rn)
     logger.debug("\timm: %s", imm)
     logger.debug("\timm_sign: %s", imm_sign)
-    logger.debug("\timm_base: %s", imm_base)
     logger.debug("\timm_val: %s", imm_val)
     logger.debug("\tshift: %s", shift)
 
@@ -56,13 +55,12 @@ def encode_mov(matches: re.Match[str]) -> MachineCode:
     binary_format = "{size}10100101{hw}{imm}{Rd}"
     logger.debug("Instruction format: %s", binary_format)
 
-    size_rd, rd, imm, imm_sign, imm_base, imm_val = matches.groups()
+    size_rd, rd, imm, imm_sign, imm_val = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
     logger.debug("\tsize_rd: %s", size_rd)
     logger.debug("\trd: %s", rd)
     logger.debug("\timm: %s", imm)
     logger.debug("\timm_sign: %s", imm_sign)
-    logger.debug("\timm_base: %s", imm_base)
     logger.debug("\timm_val: %s", imm_val)
 
     logger.debug("Parsing immediate into mov's format (16-bit data and hw*16 shift)")
@@ -242,9 +240,7 @@ def encode_logical(matches: re.Match[str]) -> MachineCode:
     binary_format = "{size}{op}0101000{N}{Rm}{uimm}{Rn}{Rd}"
     logger.debug("Instruction format: %s", binary_format)
 
-    ops, size_rd, rd, size_rn, rn, size_rm, rm, shift, uimm, base, value = (
-        matches.groups()
-    )
+    ops, size_rd, rd, size_rn, rn, size_rm, rm, shift, uimm, value = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
     logger.debug("\tops: %s", ops)
     logger.debug("\tsize_rd: %s", size_rd)
@@ -254,7 +250,6 @@ def encode_logical(matches: re.Match[str]) -> MachineCode:
     logger.debug("\tsize_rm: %s", size_rm)
     logger.debug("\trm: %s", rm)
     logger.debug("\tshift: %s", shift)
-    logger.debug("\tbase: %s", base)
     logger.debug("\tvalue: %s", value)
 
     assert size_rd == size_rn == size_rm, "All registers must be of same size"
@@ -304,7 +299,6 @@ def encode_add_sub_reg(matches: re.Match[str]) -> MachineCode:
         rm,
         shift,
         uimm,
-        uimm_base,
         uimm_val,
     ) = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
@@ -318,7 +312,6 @@ def encode_add_sub_reg(matches: re.Match[str]) -> MachineCode:
     logger.debug("\trn: %s", rm)
     logger.debug("\tshift: %s", shift)
     logger.debug("\tuimm: %s", uimm)
-    logger.debug("\tuimm_base: %s", uimm_base)
     logger.debug("\tuimm_val: %s", uimm_val)
 
     assert size_rd == size_rm == size_rn, "All registers must be of same size"
@@ -430,8 +423,6 @@ def encode_ldp_stp(matches: re.Match[str]) -> MachineCode:
     binary_format = "{size}010100{mode}{dir}{imm}{Rt2}{Rn}{Rt}"
     logger.debug("Instruction format: %s", binary_format)
 
-    print(f"{matches.groups()=}")
-
     (
         op,
         size_rt,
@@ -444,17 +435,14 @@ def encode_ldp_stp(matches: re.Match[str]) -> MachineCode:
         imm_offset,
         imm_offset_imm,
         imm_offset_sign,
-        imm_offset_base,
         imm_offset_val,
         preidx_offset,
         preidx_offset_imm,
         preidx_offset_sign,
-        preidx_offset_base,
         preidx_offset_val,
         postidx_offset,
         postidx_offset_imm,
         postidx_offset_sign,
-        postidx_offset_base,
         postidx_offset_val,
     ) = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
@@ -469,17 +457,14 @@ def encode_ldp_stp(matches: re.Match[str]) -> MachineCode:
     logger.debug("\timm_offset: %s", imm_offset)
     logger.debug("\timm_offset_imm: %s", imm_offset_imm)
     logger.debug("\timm_offset_sign: %s", imm_offset_sign)
-    logger.debug("\timm_offset_base: %s", imm_offset_base)
     logger.debug("\timm_offset_val: %s", imm_offset_val)
     logger.debug("\tpreidx_offset: %s", preidx_offset)
     logger.debug("\tpreidx_offset_imm: %s", preidx_offset_imm)
     logger.debug("\tpreidx_offset_sign: %s", preidx_offset_sign)
-    logger.debug("\tpreidx_offset_base: %s", preidx_offset_base)
     logger.debug("\tpreidx_offset_val: %s", preidx_offset_val)
     logger.debug("\tpostidx_offset: %s", postidx_offset)
     logger.debug("\tpostidx_offset_imm: %s", postidx_offset_imm)
     logger.debug("\tpostidx_offset_sign: %s", postidx_offset_sign)
-    logger.debug("\tpostidx_offset_base: %s", postidx_offset_base)
     logger.debug("\tpostidx_offset_val: %s", postidx_offset_val)
 
     assert size_rt == size_rt2, "Target registers must be of same size"
@@ -537,7 +522,6 @@ def encode_ldr_str_uimm_offset(matches: re.Match[str]) -> MachineCode:
         rn,
         offset,
         offset_uimm,
-        offset_base,
         offset_value,
     ) = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
@@ -549,7 +533,6 @@ def encode_ldr_str_uimm_offset(matches: re.Match[str]) -> MachineCode:
     logger.debug("\trn: %s", rn)
     logger.debug("\toffset: %s", offset)
     logger.debug("\toffset_uimm: %s", offset_uimm)
-    logger.debug("\toffset_base: %s", offset_base)
     logger.debug("\toffset_value: %s", offset_value)
 
     assert signed is None or op == "ldr", "There's no sign extension for str"
@@ -605,12 +588,10 @@ def encode_ldr_str_pre_post_idx(matches: re.Match[str]) -> MachineCode:
         pre_offset,
         pre_offset_imm,
         pre_offset_sign,
-        pre_offset_base,
         pre_offset_value,
         post_offset,
         post_offset_imm,
         post_offset_sign,
-        post_offset_base,
         post_offset_value,
     ) = matches.groups()
     logger.debug("Parsed following information from given asm instruction:")
@@ -624,12 +605,10 @@ def encode_ldr_str_pre_post_idx(matches: re.Match[str]) -> MachineCode:
     logger.debug("\tpre_offset: %s", pre_offset)
     logger.debug("\tpre_offset_imm: %s", pre_offset_imm)
     logger.debug("\tpre_offset_sign: %s", pre_offset_sign)
-    logger.debug("\tpre_offset_base: %s", pre_offset_base)
     logger.debug("\tpre_offset_value: %s", pre_offset_value)
     logger.debug("\tpost_offset: %s", post_offset)
     logger.debug("\tpost_offset_imm: %s", post_offset_imm)
     logger.debug("\tpost_offset_sign: %s", post_offset_sign)
-    logger.debug("\tpost_offset_base: %s", post_offset_base)
     logger.debug("\tpost_offset_value: %s", post_offset_value)
 
     assert signed is None or op == "ldr", "There's no sign extension for str"
