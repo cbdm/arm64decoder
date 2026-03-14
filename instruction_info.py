@@ -80,8 +80,8 @@ muls = ARM64Instruction(
 ldp_stp = ARM64Instruction(
     instr_bit_format=Mask("x010100xxxxxxxxxxxxxxxxxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_ldp_stp,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"(stp|ldp)\s+(x|w)(\d{1,2}),\s*(x|w)(\d{1,2}),\s*\[x(\d{1,2})((\])|(,\s*#((-)?(0x|0b)?(\d+))\])|(,\s*#((-)?(0x|0b)?(\d+))\]!)|(\],\s*#((-)?(0x|0b)?(\d+))))",
+    encode_fun=encoding_info.encode_ldp_stp,
 )
 
 ldr_str_uimm_offset = ARM64Instruction(
@@ -101,8 +101,8 @@ ldr_str_pre_post_idx = ARM64Instruction(
 ldr_str_reg_offset = ARM64Instruction(
     instr_bit_format=Mask("xx111000xx1xxxxx011010xxxxxxxxxx", 0),
     decode_fun=decoding_info.decode_ldr_str_reg_offset,
-    instr_asm_regex=r"TO-DO",
-    encode_fun=lambda x: MachineCode("00 00 00 00"),
+    instr_asm_regex=r"(ldr|str)(s)?(b|h|w)?\s+(x|w)(\d{1,2}),\s*\[x(\d{1,2}),\s*x(\d{1,2})\]",
+    encode_fun=encoding_info.encode_ldr_str_reg_offset,
 )
 
 nop = ARM64Instruction(
