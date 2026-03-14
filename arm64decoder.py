@@ -241,7 +241,7 @@ if __name__ == "__main__":
             "https://developer.arm.com/documentation/ddi0602/2025-09/Index-by-Encoding"
         )
         print(
-            "|\t5. if the issue is still there, please open an issue - "
+            "|\t5. if the problem is still there, please open an issue - "
             "https://github.com/cbdm/arm64decoder"
         )
         print("----------------------")
