@@ -183,6 +183,7 @@ def main(user_input: List[str], encode: bool, verbose: bool) -> str:
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(message)s",
+        force=True,
     )
     return encode_instr(user_input) if encode else decode_instr(user_input)
 
