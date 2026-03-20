@@ -214,7 +214,7 @@ if __name__ == "__main__":
         "-v",
         "--verbose",
         action="store_true",
-        help="show steps during process",
+        help="show steps during decode/encode process",
     )
 
     parser.add_argument(
@@ -231,19 +231,20 @@ if __name__ == "__main__":
         print("| ** There could be bugs around us! **")
         print("| If you find something that doesn't seem to work or make sense:")
         print("|\t1. double check your input and run it again")
+        print("|\t2. turn on the verbose flag and try again to see more information")
         print(
-            "|\t2. try webassembliss to double check result - https://web.assembliss.app"
+            "|\t3. try webassembliss to double check your result - https://web.assembliss.app"
         )
         print(
-            "|\t3. do it manually using the translation tables - https://caio.link/arm64-tables"
+            "|\t4. do it manually using the translation tables - https://caio.link/arm64-tables"
         )
         print(
-            "|\t4. do it again with the official documentation - "
+            "|\t5. do it again with the official documentation - "
             "https://developer.arm.com/documentation/ddi0602/2025-09/Index-by-Encoding"
         )
         print(
-            "|\t5. if the problem is still there, please open an issue - "
-            "https://github.com/cbdm/arm64decoder"
+            "|\t6. if the problem is still there, please open an issue - "
+            "https://github.com/cbdm/arm64decoder/issues"
         )
         print("----------------------")
         print()
